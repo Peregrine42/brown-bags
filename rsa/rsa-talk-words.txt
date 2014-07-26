@@ -1,0 +1,110 @@
+objective: send a secret number to someone over an insecure channel. How would you do it?
+benefits: if you can send a secret number, you can translate a message into a number and send it, 
+or use the secret number to encrypt a longer message
+
+symmetric key cryptography
+	using a shared key to encrypt a message
+	bad. why? you must at some point exchange a secret number (a key)
+	
+RSA is an example of asymmetric key cryptography
+	there is a public number pair (key) and a private number pair (key)
+	the public key is used to exchange messages
+	as long as the private key is kept safe, messages will be reasonably secure
+	
+How does RSA work?
+	example:
+		message    = 42
+		ciphertext = M^e mod n
+	
+		public key:
+		e = 13
+		n = 77
+		
+		ciphertext = 42^13 mod 77
+		ciphertext = 14
+		
+		private key:
+		d = 37
+		n = 77 (again)
+		
+		message    = C^d mod d
+		message    = 14^37 mod 77
+		message    = 42
+
+	Note this isn't symmetric:
+		public key:
+		e = 13
+		n = 77
+		
+		ciphertext = 14
+		message    = 14^13 mod 77
+		message    = 49, not 42
+
+	you pick two numbers, where one number will undo the effect of another, 
+	when counting modulo n.
+	
+That's how RSA works in practice.
+It's about the relationship between e, d and n.
+It's complicated.
+
+Here is the process:
+1. pick two primes.
+2. multiply them together, to get a number, n.
+3. pick e. 
+	make it co-prime with n, to make Euler's Theorem apply. 
+	most algorithms use a hard-coded prime number: a common one is 65537.
+
+4. find d by finding the multiplicative modular inverse of e when modulo phi(n).
+	what is phi(n)?
+	phi(n) is the amount of numbers that are less than n that don't share a factor with n.
+	So phi(9) is:
+	[1, 2, 4, 5, 7, 8].count = 6
+	phi(n) is difficult to calculate without trial and error, unless n is made up of two prime numbers. In that case:
+	phi = (first_prime_number-1)*(second_prime_number-1)
+	e.g 7 (a prime number)
+	phi(15) is:
+	15 = 3 * 5
+	[1,2,3,4].count = 4
+	[1,2].count = 2
+	2 * 4 = 8
+	[1, 2, 4, 7, 8, 11, 13, 14].count = 8
+	
+	how do you find the multiplicative inverse?
+	Use the Extended Euclid algorithm.
+		A recursive algorithm.
+
+Now you have e and n, which make up your public key.
+And you have d and n, which make up your private key.
+	
+If e and n are co-prime, then Euler's theorem implies that:
+	if you raise a message to e modulo n, 
+	then raise it to d, again modulo n, 
+	they will cancel out and you get back your message.
+	
+What is Euler's Theorem?
+m^phi(n) = 1 mod n
+If m and n are co-prime.
+The important bit about this Theorem is that it implies a relationship between
+n and phi n.
+
+m^k*phi(n) = 1 mod n
+m * m^k*phi(n) = m mod n
+m^k*phi(n)+1 = m mod n
+
+If e is to cancel out d, then:
+m^e*d = m mod n
+
+So:
+m^e*d = m^k*phi(n)+1
+e*d = phi(n) + 1
+d = ((k*phi(n)) + 1) / e
+
+This process is secure because if you want to break the code, 
+you have e and n (the public key), but to get the private key d you will need to find phi(n). 
+This is hard to find unless you know the prime factorisation of n, and prime factorisation is also hard.
+
+So in summary:
+	RSA encryption is hard to crack because:
+		the only known way to find the private key
+		is to find the prime factorisation of one part of that key,
+		which is hard.
